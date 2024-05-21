@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  userId    Int     @id @default(autoincrement()) @map("userId")
+  email     String  @unique @map("email")
+  password  String  @map("password")
+  
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  UserInfos UserInfos?    // 1명의 사용자는 1개의 사용자 정보를 가진다.
+  Posts     Posts[]       // 1명의 사용자는 여러개의 게시글을 작성할 수 있다.
+  Comments  Comments[]    // 1명의 사용자는 여러개의 댓글을 작성할 수 있다.
+  UserHistories UserHistories[]
+
+  @@map ("Users")
+}
+
+model UserHistories {
+  userHistoryId String @id @default(uuid()) @map("userHistoryId")
+  UserId Int @map("UserId")
+  changedField String @map("changedField")
+  oldValue String? @map("oldValue")
+  newValue String @map("newValue")
+  changedAt DateTime @default(now()) @map("changedAt")
+
+  User Users @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+
+  @@map ("UserHistories")
+}
+
+model Posts {
+  postId Int @id @default(autoincrement()) @map("postId")
+  UserId Int @map("UserId")
+  title String @map("title")
+  content String @db.Text @map("content")
+
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  Comments  Comments[]  // 1개의 게시글에서 여러개의 댓글을 작성할 수 있다.
+
+  User Users @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+
+  @@map ("Posts")
+}
+
+model UserInfos {
+  userInfoId Int @id @default(autoincrement()) @map("userInfoId")
+  UserId Int @unique @map("UserId")
+  name String @map("name")
+  age Int? @map("age")
+  gender String @map("gender")
+  profileImage String? @map("profileImage")
+
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  User Users @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+
+  @@map ("UserInfos")
+}
+
+model Comments {
+  commentId Int @id @default(autoincrement()) @map("commentId")
+  UserId Int @map("userId")
+  PostId Int @map("postId")
+  content String @map("content")
+
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  User Users @relation(fields: [UserId], references: [userId], onDelete: Cascade)
+  Post Posts @relation(fields: [PostId], references: [postId], onDelete: Cascade)
+
+  @@map ("Comments")
+}
+
